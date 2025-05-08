@@ -31,28 +31,105 @@ class MyAppState extends ChangeNotifier {
     current = WordPair.random();
     notifyListeners();
   }
+  var favorites = <WordPair>[];
+  void toggleFavorite() {
+    if(favorites.contains(current)){
+      favorites.remove(current);
+        } else {
+          favorites.add(current);
+        }
+        notifyListeners();
+  }
 }
 
 class MyHomePage extends StatelessWidget {
   @override
+
   Widget build(BuildContext context) {
+    return Scaffold(
+      body: Row(
+        children: [
+          SafeArea(child: NavigationRail(
+            extended: false,
+            destinations: [
+              NavigationRailDestination(icon: Icon(Icons.home), label: Text('Home')),
+              NavigationRailDestination(icon: Icon(Icons.favorite), label: Text('Favoritos')),
+              
+            ],
+            selectedIndex: 0,
+            onDestinationSelected: (value) {
+              print('selected: $value');
+            },
+          ),),
+          Expanded(child: Container(color: Theme.of(context).colorScheme.primaryContainer, child: GeneratorPage(),
+          ),),
+        ],
+      ),
+    );
+  }
+}
+
+
+  class GeneratorPage extends StatelessWidget {
+    Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
     var pair = appState.current;
 
-    return Scaffold(
-      body: Column(
-        children: [
-          Text('Uma palavra aleatória:'),
-          BigCard(pair: pair),
-           ElevatedButton(
-            onPressed: () {
-              appState.getNext();
-            },
-            child: Text('Próximo'),
-          ),
+    IconData icon;
+    if (appState.favorites.contains(pair)) {
+      icon = Icons.favorite;
+    } else {
+      icon = Icons.favorite_border;
+    }
 
-        ],
-      ),
+    return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Title(),
+            BigCard(pair: pair),
+             Row(
+              mainAxisSize: MainAxisSize.min,
+               children: [
+                 ElevatedButton.icon(
+                  onPressed: () {
+                    appState.toggleFavorite();
+                      print(appState.favorites);
+                  },
+                 icon: Icon(icon),
+                  label: Text('Like'),
+                             ),
+                             SizedBox(width: 10,),
+                 ElevatedButton(
+                  onPressed: () {
+                    appState.getNext();
+                  },
+                  child: Text('Próximo'),
+                             ),
+               ],
+             ),
+        
+          ],
+        ),
+      );
+  }
+}
+
+class Title extends StatelessWidget {
+  const Title({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+         final style = theme.textTheme.displaySmall!.copyWith(
+      color: theme.colorScheme.primary,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Text('Uma palavra aleatória:', style: style,),
     );
   }
 }
@@ -67,6 +144,19 @@ class BigCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(pair.asCamelCase);
+    final theme = Theme.of(context);
+    final style = theme.textTheme.displayMedium!.copyWith(
+      color: theme.colorScheme.onPrimary,
+    );
+
+    return Card(
+      color: theme.colorScheme.secondary,
+      child: Padding(
+
+        padding: const EdgeInsets.all(20),
+        child: Text(pair.asCamelCase, style: style, semanticsLabel: "${pair.first} ${pair.second}",
+        ),
+      ),
+    );
   }
 }
